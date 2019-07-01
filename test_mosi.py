@@ -16,7 +16,7 @@ import time
 import data_loader as loader
 from collections import defaultdict, OrderedDict
 import argparse
-import cPickle as pickle
+import _pickle as pickle
 import time
 import json, os, ast, h5py
 
@@ -37,7 +37,7 @@ def get_data(args,config):
 	val_split = 0.1514                      # fixed. 52 training 10 validation
 	use_pretrained_word_embedding = True    # fixed. use glove 300d
 	embedding_vecor_length = 300            # fixed. use glove 300d
-	# 115                   # fixed for MOSI. The max length of a segment in MOSI dataset is 114 
+	# 115                   # fixed for MOSI. The max length of a segment in MOSI dataset is 114
 	max_segment_len = config['seqlength']
 	end_to_end = True                       # fixed
 
@@ -46,9 +46,9 @@ def get_data(args,config):
 	train, valid, test = loader.load_word_level_features(max_segment_len, tr_split)
 
 	ix2word = inv_map = {v: k for k, v in word2ix.iteritems()}
-	print len(word2ix)
-	print len(ix2word)
-	print word_embedding[0].shape
+	print (len(word2ix))
+	print (len(ix2word))
+	print (word_embedding[0].shape)
 
 	feature_str = ''
 	if args.feature_selection:
@@ -100,21 +100,21 @@ def get_data(args,config):
 	text_eb_layer = Embedding(word_embedding[0].shape[0], embedding_vecor_length, input_length=max_segment_len, weights=word_embedding, name = 'text_eb_layer', trainable=False)(text_input)
 	model = Model(text_input, text_eb_layer)
 	text_train_emb = model.predict(text_train)
-	print text_train_emb.shape      # n x seq x 300
-	print covarep_train.shape       # n x seq x 5/34
-	print facet_train.shape         # n x seq x 20/43
+	print(text_train_emb.shape)      # n x seq x 300
+	print(covarep_train.shape)       # n x seq x 5/34
+	print(facet_train.shape)         # n x seq x 20/43
 	X_train = np.concatenate((text_train_emb, covarep_train, facet_train), axis=2)
 
 	text_valid_emb = model.predict(text_valid)
-	print text_valid_emb.shape      # n x seq x 300
-	print covarep_valid.shape       # n x seq x 5/34
-	print facet_valid.shape         # n x seq x 20/43
+	print(text_valid_emb.shape)      # n x seq x 300
+	print(covarep_valid.shape)       # n x seq x 5/34
+	print(facet_valid.shape)         # n x seq x 20/43
 	X_valid = np.concatenate((text_valid_emb, covarep_valid, facet_valid), axis=2)
 
 	text_test_emb = model.predict(text_test)
-	print text_test_emb.shape      # n x seq x 300
-	print covarep_test.shape       # n x seq x 5/34
-	print facet_test.shape         # n x seq x 20/43
+	print(text_test_emb.shape)      # n x seq x 300
+	print(covarep_test.shape)       # n x seq x 5/34
+	print(facet_test.shape)         # n x seq x 20/43
 	X_test = np.concatenate((text_test_emb, covarep_test, facet_test), axis=2)
 
 	return X_train, y_train, X_valid, y_valid, X_test, y_test
@@ -157,13 +157,13 @@ class EFLSTM(nn.Module):
 		self.fc1 = nn.Linear(h, h)
 		self.fc2 = nn.Linear(h, output_dim)
 		self.dropout = nn.Dropout(dropout)
-		
+
 	def forward(self, x):
 		# x is t x n x d
 		t = x.shape[0]
 		n = x.shape[1]
-		self.hx = torch.zeros(n, self.h).cuda()
-		self.cx = torch.zeros(n, self.h).cuda()
+		self.hx = torch.zeros(n, self.h)
+		self.cx = torch.zeros(n, self.h)
 		all_hs = []
 		all_cs = []
 		for i in range(t):
@@ -223,7 +223,7 @@ class MFN(nn.Module):
 		self.out_fc1 = nn.Linear(final_out, h_out)
 		self.out_fc2 = nn.Linear(h_out, output_dim)
 		self.out_dropout = nn.Dropout(out_dropout)
-		
+
 	def forward(self,x):
 		x_l = x[:,:,:self.d_l]
 		x_a = x[:,:,self.d_l:self.d_l+self.d_a]
@@ -231,13 +231,13 @@ class MFN(nn.Module):
 		# x is t x n x d
 		n = x.shape[1]
 		t = x.shape[0]
-		self.h_l = torch.zeros(n, self.dh_l).cuda()
-		self.h_a = torch.zeros(n, self.dh_a).cuda()
-		self.h_v = torch.zeros(n, self.dh_v).cuda()
-		self.c_l = torch.zeros(n, self.dh_l).cuda()
-		self.c_a = torch.zeros(n, self.dh_a).cuda()
-		self.c_v = torch.zeros(n, self.dh_v).cuda()
-		self.mem = torch.zeros(n, self.mem_dim).cuda()
+		self.h_l = torch.zeros(n, self.dh_l)
+		self.h_a = torch.zeros(n, self.dh_a)
+		self.h_v = torch.zeros(n, self.dh_v)
+		self.c_l = torch.zeros(n, self.dh_l)
+		self.c_a = torch.zeros(n, self.dh_a)
+		self.c_v = torch.zeros(n, self.dh_v)
+		self.mem = torch.zeros(n, self.mem_dim)
 		all_h_ls = []
 		all_h_as = []
 		all_h_vs = []
@@ -302,7 +302,7 @@ def train_ef(X_train, y_train, X_valid, y_valid, X_test, y_test, config):
 	dropout = config["drop"]
 
 	model = EFLSTM(d,h,output_dim,dropout)
-	
+
 	optimizer = optim.Adam(model.parameters(),lr=config["lr"])
 	#optimizer = optim.SGD(model.parameters(),lr=config["lr"],momentum=config["momentum"])
 
@@ -312,7 +312,8 @@ def train_ef(X_train, y_train, X_valid, y_valid, X_test, y_test, config):
 	#             ], momentum=0.9)
 
 	criterion = nn.L1Loss()
-	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+	#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+	device = torch.device('cpu')
 	model = model.to(device)
 	criterion = criterion.to(device)
 	scheduler = ReduceLROnPlateau(optimizer,mode='min',patience=100,factor=0.5,verbose=True)
@@ -326,8 +327,8 @@ def train_ef(X_train, y_train, X_valid, y_valid, X_test, y_test, config):
 			start = batch*batchsize
 			end = (batch+1)*batchsize
 			optimizer.zero_grad()
-			batch_X = torch.Tensor(X_train[:,start:end]).cuda()
-			batch_y = torch.Tensor(y_train[start:end]).cuda()
+			batch_X = torch.Tensor(X_train[:,start:end])
+			batch_y = torch.Tensor(y_train[start:end])
 			predictions = model.forward(batch_X).squeeze(1)
 			loss = criterion(predictions, batch_y)
 			loss.backward()
@@ -339,8 +340,8 @@ def train_ef(X_train, y_train, X_valid, y_valid, X_test, y_test, config):
 		epoch_loss = 0
 		model.eval()
 		with torch.no_grad():
-			batch_X = torch.Tensor(X_valid).cuda()
-			batch_y = torch.Tensor(y_valid).cuda()
+			batch_X = torch.Tensor(X_valid)
+			batch_y = torch.Tensor(y_valid)
 			predictions = model.forward(batch_X).squeeze(1)
 			epoch_loss = criterion(predictions, batch_y).item()
 		return epoch_loss
@@ -349,7 +350,7 @@ def train_ef(X_train, y_train, X_valid, y_valid, X_test, y_test, config):
 		epoch_loss = 0
 		model.eval()
 		with torch.no_grad():
-			batch_X = torch.Tensor(X_test).cuda()
+			batch_X = torch.Tensor(X_test)
 			predictions = model.forward(batch_X).squeeze(1)
 			predictions = predictions.cpu().data.numpy()
 		return predictions
@@ -357,10 +358,10 @@ def train_ef(X_train, y_train, X_valid, y_valid, X_test, y_test, config):
 	# timing
 	start_time = time.time()
 	predictions = predict(model, X_test)
-	print predictions.shape
-	print predictions
+	print(predictions.shape)
+	print(predictions)
 	end_time = time.time()
-	print end_time-start_time
+	print(end_time-start_time)
 	assert False
 
 	best_valid = 999999.0
@@ -372,29 +373,29 @@ def train_ef(X_train, y_train, X_valid, y_valid, X_test, y_test, config):
 		if valid_loss <= best_valid:
 			# save model
 			best_valid = valid_loss
-			print epoch, train_loss, valid_loss, 'saving model'
+			print (epoch, train_loss, valid_loss, 'saving model')
 			torch.save(model, 'res_mfn2/mfn_%d.pt' %rand)
 		else:
-			print epoch, train_loss, valid_loss
+			print (epoch, train_loss, valid_loss)
 
-	model = torch.load('res_mfn2/mfn_%d.pt' %rand)
+	model = torch.load('res_mfn2/mfn_%d.pt' %rand, map_location=lambda storage, loc: storage)
 
 	predictions = predict(model, X_test)
 	mae = np.mean(np.absolute(predictions-y_test))
-	print "mae: ", mae
+	print ("mae: ", mae)
 	corr = np.corrcoef(predictions,y_test)[0][1]
-	print "corr: ", corr
+	print ("corr: ", corr)
 	mult = round(sum(np.round(predictions)==np.round(y_test))/float(len(y_test)),5)
-	print "mult_acc: ", mult
+	print ("mult_acc: ", mult)
 	f_score = round(f1_score(np.round(predictions),np.round(y_test),average='weighted'),5)
-	print "mult f_score: ", f_score
+	print ("mult f_score: ", f_score)
 	true_label = (y_test >= 0)
 	predicted_label = (predictions >= 0)
-	print "Confusion Matrix :"
-	print confusion_matrix(true_label, predicted_label)
-	print "Classification Report :"
-	print classification_report(true_label, predicted_label, digits=5)
-	print "Accuracy ", accuracy_score(true_label, predicted_label)
+	print ("Confusion Matrix :")
+	print (confusion_matrix(true_label, predicted_label))
+	print ("Classification Report :")
+	print (classification_report(true_label, predicted_label, digits=5))
+	print ("Accuracy ", accuracy_score(true_label, predicted_label))
 	sys.stdout.flush()
 
 def train_mfn(X_train, y_train, X_valid, y_valid, X_test, y_test, configs):
@@ -426,7 +427,8 @@ def train_mfn(X_train, y_train, X_valid, y_valid, X_test, y_test, configs):
 	#             ], momentum=0.9)
 
 	criterion = nn.L1Loss()
-	device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+	#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+	device = torch.device('cpu')
 	model = model.to(device)
 	criterion = criterion.to(device)
 	scheduler = ReduceLROnPlateau(optimizer,mode='min',patience=100,factor=0.5,verbose=True)
@@ -440,8 +442,8 @@ def train_mfn(X_train, y_train, X_valid, y_valid, X_test, y_test, configs):
 			start = batch*batchsize
 			end = (batch+1)*batchsize
 			optimizer.zero_grad()
-			batch_X = torch.Tensor(X_train[:,start:end]).cuda()
-			batch_y = torch.Tensor(y_train[start:end]).cuda()
+			batch_X = torch.Tensor(X_train[:,start:end])
+			batch_y = torch.Tensor(y_train[start:end])
 			predictions = model.forward(batch_X).squeeze(1)
 			loss = criterion(predictions, batch_y)
 			loss.backward()
@@ -453,8 +455,8 @@ def train_mfn(X_train, y_train, X_valid, y_valid, X_test, y_test, configs):
 		epoch_loss = 0
 		model.eval()
 		with torch.no_grad():
-			batch_X = torch.Tensor(X_valid).cuda()
-			batch_y = torch.Tensor(y_valid).cuda()
+			batch_X = torch.Tensor(X_valid)
+			batch_y = torch.Tensor(y_valid)
 			predictions = model.forward(batch_X).squeeze(1)
 			epoch_loss = criterion(predictions, batch_y).item()
 		return epoch_loss
@@ -463,7 +465,7 @@ def train_mfn(X_train, y_train, X_valid, y_valid, X_test, y_test, configs):
 		epoch_loss = 0
 		model.eval()
 		with torch.no_grad():
-			batch_X = torch.Tensor(X_test).cuda()
+			batch_X = torch.Tensor(X_test)
 			predictions = model.forward(batch_X).squeeze(1)
 			predictions = predictions.cpu().data.numpy()
 		return predictions
@@ -477,30 +479,30 @@ def train_mfn(X_train, y_train, X_valid, y_valid, X_test, y_test, configs):
 		if valid_loss <= best_valid:
 			# save model
 			best_valid = valid_loss
-			print epoch, train_loss, valid_loss, 'saving model'
+			print (epoch, train_loss, valid_loss, 'saving model')
 			torch.save(model, 'temp_models/mfn_%d.pt' %rand)
 		else:
-			print epoch, train_loss, valid_loss
+			print (epoch, train_loss, valid_loss)
 
-	print 'model number is:', rand
-	model = torch.load('temp_models/mfn_%d.pt' %rand)
+	print ('model number is:', rand)
+	model = torch.load('temp_models/mfn_%d.pt' %rand, map_location=lambda storage, loc: storage)
 
 	predictions = predict(model, X_test)
 	mae = np.mean(np.absolute(predictions-y_test))
-	print "mae: ", mae
+	print ("mae: ", mae)
 	corr = np.corrcoef(predictions,y_test)[0][1]
-	print "corr: ", corr
+	print ("corr: ", corr)
 	mult = round(sum(np.round(predictions)==np.round(y_test))/float(len(y_test)),5)
-	print "mult_acc: ", mult
+	print ("mult_acc: ", mult)
 	f_score = round(f1_score(np.round(predictions),np.round(y_test),average='weighted'),5)
-	print "mult f_score: ", f_score
+	print ("mult f_score: ", f_score)
 	true_label = (y_test >= 0)
 	predicted_label = (predictions >= 0)
-	print "Confusion Matrix :"
-	print confusion_matrix(true_label, predicted_label)
-	print "Classification Report :"
-	print classification_report(true_label, predicted_label, digits=5)
-	print "Accuracy ", accuracy_score(true_label, predicted_label)
+	print ("Confusion Matrix :")
+	print (confusion_matrix(true_label, predicted_label))
+	print ("Classification Report :")
+	print (classification_report(true_label, predicted_label, digits=5))
+	print ("Accuracy ", accuracy_score(true_label, predicted_label))
 	sys.stdout.flush()
 
 def test(X_test, y_test, metric):
@@ -509,34 +511,34 @@ def test(X_test, y_test, metric):
 		epoch_loss = 0
 		model.eval()
 		with torch.no_grad():
-			batch_X = torch.Tensor(X_test).cuda()
+			batch_X = torch.Tensor(X_test)
 			predictions = model.forward(batch_X).squeeze(1)
 			predictions = predictions.cpu().data.numpy()
 		return predictions
 	if metric == 'mae':
-		model = torch.load('best/mfn_mae.pt')
+		model = torch.load('best/mfn_mae.pt',map_location=lambda storage, loc: storage)
 	if metric == 'acc':
-		model = torch.load('best/mfn_acc.pt')
-	model = model.cpu().cuda()
-	
+		model = torch.load('best/mfn_acc.pt',map_location=lambda storage, loc: storage)
+	model = model.cpu()
+
 	predictions = predict(model, X_test)
-	print predictions.shape
-	print y_test.shape
+	print (predictions.shape)
+	print (y_test.shape)
 	mae = np.mean(np.absolute(predictions-y_test))
-	print "mae: ", mae
+	print ("mae: ", mae)
 	corr = np.corrcoef(predictions,y_test)[0][1]
-	print "corr: ", corr
+	print ("corr: ", corr)
 	mult = round(sum(np.round(predictions)==np.round(y_test))/float(len(y_test)),5)
-	print "mult_acc: ", mult
+	print ("mult_acc: ", mult)
 	f_score = round(f1_score(np.round(predictions),np.round(y_test),average='weighted'),5)
-	print "mult f_score: ", f_score
+	print ("mult f_score: ", f_score)
 	true_label = (y_test >= 0)
 	predicted_label = (predictions >= 0)
-	print "Confusion Matrix :"
-	print confusion_matrix(true_label, predicted_label)
-	print "Classification Report :"
-	print classification_report(true_label, predicted_label, digits=5)
-	print "Accuracy ", accuracy_score(true_label, predicted_label)
+	print ("Confusion Matrix :")
+	print (confusion_matrix(true_label, predicted_label))
+	print ("Classification Report :")
+	print (classification_report(true_label, predicted_label, digits=5))
+	print ("Accuracy ", accuracy_score(true_label, predicted_label))
 	sys.stdout.flush()
 
 local = False
@@ -575,16 +577,16 @@ assert False
 #assert False
 
 while True:
-	# mae 0.993 [{'input_dims': [300, 5, 20], 'batchsize': 128, 'memsize': 128, 
-	#'windowsize': 2, 'lr': 0.01, 'num_epochs': 100, 'h_dims': [88, 48, 16], 'momentum': 0.9}, 
-	#{'shapes': 128, 'drop': 0.0}, {'shapes': 64, 'drop': 0.2}, 
-	#{'shapes': 256, 'drop': 0.0}, {'shapes': 64, 'drop': 0.2}, 
+	# mae 0.993 [{'input_dims': [300, 5, 20], 'batchsize': 128, 'memsize': 128,
+	#'windowsize': 2, 'lr': 0.01, 'num_epochs': 100, 'h_dims': [88, 48, 16], 'momentum': 0.9},
+	#{'shapes': 128, 'drop': 0.0}, {'shapes': 64, 'drop': 0.2},
+	#{'shapes': 256, 'drop': 0.0}, {'shapes': 64, 'drop': 0.2},
 	#{'shapes': 64, 'drop': 0.5}]
 
-	# acc 77.0 [{'input_dims': [300, 5, 20], 'batchsize': 128, 'memsize': 400, 
-	#'windowsize': 2, 'lr': 0.005, 'num_epochs': 100, 'h_dims': [64, 8, 80], 'momentum': 0.9}, 
-	#{'shapes': 128, 'drop': 0.5}, {'shapes': 128, 'drop': 0.2}, 
-	#{'shapes': 128, 'drop': 0.5}, {'shapes': 128, 'drop': 0.5}, 
+	# acc 77.0 [{'input_dims': [300, 5, 20], 'batchsize': 128, 'memsize': 400,
+	#'windowsize': 2, 'lr': 0.005, 'num_epochs': 100, 'h_dims': [64, 8, 80], 'momentum': 0.9},
+	#{'shapes': 128, 'drop': 0.5}, {'shapes': 128, 'drop': 0.2},
+	#{'shapes': 128, 'drop': 0.5}, {'shapes': 128, 'drop': 0.5},
 	#{'shapes': 256, 'drop': 0.5}]
 
 	config = dict()
@@ -615,7 +617,5 @@ while True:
 	outConfig["shapes"] = random.choice([32,64,128,256])
 	outConfig["drop"] = random.choice([0.0,0.2,0.5,0.7])
 	configs = [config,NN1Config,NN2Config,gamma1Config,gamma2Config,outConfig]
-	print configs
+	print (configs)
 	train_mfn(X_train, y_train, X_valid, y_valid, X_test, y_test, configs)
-
-

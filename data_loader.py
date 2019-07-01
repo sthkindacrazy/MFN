@@ -3,7 +3,7 @@ from collections import defaultdict
 import numpy as np
 import random
 import scipy.io as sio
-import cPickle
+import _pickle as cPickle
 import h5py
 
 basedir = os.path.dirname(os.path.realpath(__file__))
@@ -122,9 +122,9 @@ def split_data(tr_proportion, truth_dict):
     train = data[:52]
     valid = data[52:62]
     test = data[62:]
-    print len(train)
-    print len(valid) #0.1514 62 -> 52, 10, 31
-    print len(test)
+    print (len(train))
+    print (len(valid)) #0.1514 62 -> 52, 10, 31
+    print (len(test))
     return train, valid, test
 
 
@@ -142,12 +142,12 @@ def get_data(dataset, max_segment_len):
                     covarep.append(np.zeros(len(fts[0]['covarep'])))
                     facet.append(np.zeros(len(fts[0]['facet'])))
                 for w in fts:
-                    text.append(w['word_ix']) 
+                    text.append(w['word_ix'])
                     covarep.append(w['covarep'])
                     facet.append(w['facet'])
             else:   # max_segment_len < len(text), take last max_segment_len of text
                 for w in fts[len(fts)-max_segment_len:]:
-                    text.append(w['word_ix']) 
+                    text.append(w['word_ix'])
                     covarep.append(w['covarep'])
                     facet.append(w['facet'])
             data['facet'].append(facet)
@@ -176,8 +176,3 @@ def load_word_level_features(max_segment_len, tr_proportion):
     valid = get_data(valid, max_segment_len)
     test = get_data(test, max_segment_len)
     return train, valid, test
-
-
-
-
-
